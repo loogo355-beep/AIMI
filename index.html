@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simple Front Page</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      display: flex;
+      justify-content: flex-end;
+      background: #f4f4f4;
+      padding: 15px;
+    }
+    header a {
+      text-decoration: none;
+      color: blue;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .container {
+      margin-top: 80px;
+    }
+    button {
+      display: block;
+      margin: 15px auto;
+      padding: 12px 20px;
+      font-size: 16px;
+      border-radius: 6px;
+      border: 1px solid #333;
+      cursor: pointer;
+      background: #fff;
+    }
+    .notice {
+      display: none;
+      margin-top: 20px;
+      padding: 15px;
+      background: #eaf3ff;
+      border: 1px solid #007bff;
+      border-radius: 5px;
+      width: 80%;
+      margin-left: auto;
+      margin-right: auto;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <a onclick="showHelp()">Help</a>
+  </header>
+
+  <div class="container">
+    <button>Login</button>
+    <button>Sign Up</button>
+    <button>Submit Verification Code</button>
+  </div>
+
+  <div id="helpBox" class="notice">
+    <h3>Help</h3>
+    <p>Login kaise karna hai:</p>
+    <ol style="text-align:left;">
+      <li>Login button par click karein</li>
+      <li>Apna username aur password enter karein</li>
+      <li>Submit karein</li>
+    </ol>
+  </div>
+
+  <script>
+    function showHelp() {
+      document.getElementById("helpBox").style.display = "block";
+    }
+  </script>
+</body>
+</html>
