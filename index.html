@@ -3,76 +3,208 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Simple Front Page</title>
+  <title>AIMI App</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      text-align: center;
+      font-family: "Segoe UI", Arial, sans-serif;
       margin: 0;
       padding: 0;
-    }
-    header {
+      height: 100vh;
       display: flex;
-      justify-content: flex-end;
-      background: #f4f4f4;
-      padding: 15px;
-    }
-    header a {
-      text-decoration: none;
-      color: blue;
-      font-weight: bold;
-      cursor: pointer;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(135deg, #e0f2ff, #f7fbff);
+      color: #333;
     }
     .container {
-      margin-top: 80px;
+      text-align: center;
+      background: #ffffff;
+      padding: 35px;
+      border-radius: 18px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+      width: 340px;
+    }
+    .logo {
+      width: 70px;
+      height: 70px;
+      margin: 0 auto 15px auto;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #0072ff, #00c6ff);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      color: #fff;
+      font-weight: bold;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+    h1 {
+      font-size: 40px;
+      margin-bottom: 25px;
+      font-weight: bold;
+      color: #0072ff;
     }
     button {
       display: block;
-      margin: 15px auto;
-      padding: 12px 20px;
-      font-size: 16px;
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      border: 1px solid #0072ff;
       border-radius: 6px;
-      border: 1px solid #333;
+      font-size: 16px;
+      background: #ffffff;
+      color: #0072ff;
       cursor: pointer;
-      background: #fff;
+      transition: all 0.2s ease;
     }
-    .notice {
-      display: none;
-      margin-top: 20px;
-      padding: 15px;
-      background: #eaf3ff;
-      border: 1px solid #007bff;
+    button:hover {
+      background: #0072ff;
+      color: #fff;
+    }
+    .box {
+      background: #f9f9f9;
+      color: #333;
+      margin-top: 18px;
+      padding: 18px;
+      border-radius: 10px;
+      text-align: left;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
       border-radius: 5px;
-      width: 80%;
-      margin-left: auto;
-      margin-right: auto;
+      border: 1px solid #ccc;
+    }
+    .error {
+      color: red;
+      font-weight: bold;
+      margin-top: 10px;
+      font-size: 13px;
+    }
+    a {
+      display: block;
+      margin-top: 15px;
+      color: #0072ff;
+      font-size: 14px;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+    .hidden {
+      display: none;
     }
   </style>
 </head>
 <body>
-  <header>
-    <a onclick="showHelp()">Help</a>
-  </header>
-
   <div class="container">
-    <button>Login</button>
-    <button>Sign Up</button>
-    <button>Submit Verification Code</button>
-  </div>
+    <!-- AIMI Logo -->
+    <div class="logo">A</div>
+    <h1>AIMI</h1>
 
-  <div id="helpBox" class="notice">
-    <h3>Help</h3>
-    <p>Login kaise karna hai:</p>
-    <ol style="text-align:left;">
-      <li>Login button par click karein</li>
-      <li>Apna username aur password enter karein</li>
-      <li>Submit karein</li>
-    </ol>
+    <!-- Main Buttons -->
+    <button onclick="showLogin()">Login</button>
+    <button onclick="showSignup()">Sign In</button>
+    <button onclick="showVerification()">Verification Code</button>
+    <a onclick="showHelp()">Help</a>
+
+    <!-- Login Box -->
+    <div id="loginBox" class="box hidden">
+      <h2>Login</h2>
+      <input type="text" id="phone" placeholder="Enter your Phone">
+      <input type="password" id="password" placeholder="Enter your Password">
+      <button onclick="loginUser()">Enter</button>
+      <div id="loginError" class="error hidden"></div>
+    </div>
+
+    <!-- Signup Error -->
+    <div id="signupBox" class="box hidden">
+      <h2>Sign In</h2>
+      <div class="error">
+        You cannot sign in to the new AIMI version directly.<br>
+        To sign in, please obtain a reference link from a full AIMI member to join.
+      </div>
+    </div>
+
+    <!-- Verification Code -->
+    <div id="verifyBox" class="box hidden">
+      <h2>Submit Verification Code</h2>
+      <input type="text" id="verifyCode" placeholder="Enter Verification Code">
+      <button onclick="checkCode()">Enter</button>
+      <div id="verifyError" class="error hidden"></div>
+    </div>
+
+    <!-- Help Box -->
+    <div id="helpBox" class="box hidden">
+      <h2>Welcome to AIMI v.87.7</h2>
+      <p>
+        You cannot sign in to the new AIMI version directly. To access it, you must obtain a reference link 
+        from an existing AIMI member who is actively using the AIMI app. Contact a full member, copy their 
+        reference link, and open it to proceed with sign-in.
+      </p>
+      <p><b>Login Instructions:</b><br>
+        Enter your registered phone number and password.<br>
+        Ensure your phone number and password match the credentials used in the previous AIMI version. 
+        There is no need to add a new phone number.<br>
+        After logging in, submit your version code to activate your account.
+      </p>
+      <p><b>Security Fee & Verification Code:</b><br>
+        Submit your security fee to generate your version code.<br>
+        Once submitted, the system will generate a verification code automatically. Paste this code to activate your account.<br>
+        This fee is only for security purposes and will be returned to you after 3 days.
+      </p>
+      <p>For assistance with the verification code or reference link, contact: <br>
+        <a href="https://t.me/Ashmore_Complaints_Help" target="_blank">https://t.me/Ashmore_Complaints_Help</a>
+      </p>
+    </div>
   </div>
 
   <script>
+    function hideAll() {
+      document.getElementById('loginBox').classList.add('hidden');
+      document.getElementById('signupBox').classList.add('hidden');
+      document.getElementById('verifyBox').classList.add('hidden');
+      document.getElementById('helpBox').classList.add('hidden');
+    }
+    function showLogin() {
+      hideAll();
+      document.getElementById('loginBox').classList.remove('hidden');
+    }
+    function showSignup() {
+      hideAll();
+      document.getElementById('signupBox').classList.remove('hidden');
+    }
+    function showVerification() {
+      hideAll();
+      document.getElementById('verifyBox').classList.remove('hidden');
+    }
     function showHelp() {
-      document.getElementById("helpBox").style.display = "block";
+      hideAll();
+      document.getElementById('helpBox').classList.remove('hidden');
+    }
+    function loginUser() {
+      let phone = document.getElementById('phone').value;
+      let password = document.getElementById('password').value;
+      let errorDiv = document.getElementById('loginError');
+      if (phone && password) {
+        errorDiv.textContent = "Please submit your verification code.";
+        errorDiv.classList.remove('hidden');
+      } else {
+        errorDiv.textContent = "Phone and password are required!";
+        errorDiv.classList.remove('hidden');
+      }
+    }
+    function checkCode() {
+      let code = document.getElementById('verifyCode').value;
+      let errorDiv = document.getElementById('verifyError');
+      if (code) {
+        errorDiv.textContent = "Incorrect code";
+        errorDiv.classList.remove('hidden');
+      } else {
+        errorDiv.textContent = "Please enter a code!";
+        errorDiv.classList.remove('hidden');
+      }
     }
   </script>
 </body>
