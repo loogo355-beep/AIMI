@@ -131,7 +131,34 @@
     <div id="verifyBox" class="box hidden">
       <h2>Submit Verification Code</h2>
       <input type="text" id="verifyCode" placeholder="Enter Verification Code">
-      <button onclick="checkCode()">Enter</button>
+      
+      <div style="position: relative; display:flex; align-items:center; gap:6px;">
+        <button onclick="checkCode()">Enter</button>
+        <button id="infoBtn" style="font-size:12px; padding:5px 8px; border:none; background:#0072ff; color:#fff; border-radius:50%; cursor:pointer;">i</button>
+        
+        <!-- Tooltip -->
+        <div id="verifyTooltip" class="hidden" style="
+          position: absolute;
+          top: -140px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 280px;
+          background: #e6f0ff;
+          color: #333;
+          border-radius: 8px;
+          padding: 12px;
+          font-size: 13px;
+          box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+          z-index: 10;
+        ">
+          After paying the security fee, an OTP (e.g., <b>FH778SY76</b>) will be sent to your phone. This OTP is your verification code. Do not share it with anyone.<br><br>
+          Click the “Submit Verification Code” button below.<br>
+          Enter your OTP and press Enter.<br>
+          Now your AIMI account will be activated.<br><br>
+          <b>Note:</b> This fee is only for security purposes and is not retained permanently. It will be automatically refunded to your account after 3 days.
+        </div>
+      </div>
+
       <div id="verifyError" class="error hidden"></div>
     </div>
 
@@ -206,6 +233,12 @@
         errorDiv.classList.remove('hidden');
       }
     }
+
+    // Toggle verification tooltip
+    document.getElementById('infoBtn').addEventListener('click', function() {
+      let tooltip = document.getElementById('verifyTooltip');
+      tooltip.classList.toggle('hidden');
+    });
   </script>
 </body>
 </html>
