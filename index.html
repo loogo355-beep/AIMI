@@ -442,6 +442,16 @@
                 <div class="desc">Share reference</div>
               </div>
             </div>
+
+            <!-- My Investments tile (hidden by default; shown only for special-code users) -->
+            <div id="myInvestmentsTile" class="action-tile" style="display:none;" onclick="showPage('page-investments')">
+              <img src="https://images.unsplash.com/photo-1588702547923-7093a6c3ba33?q=80&w=600&auto=format&fit=crop&ixlib=rb-4.0.3&s=abcdef1234567890" alt="investments" />
+              <div>
+                <div class="title">My Investments</div>
+                <div class="desc">View purchased</div>
+              </div>
+            </div>
+
           </div>
 
           <!-- Projects grid -->
@@ -535,7 +545,7 @@
         name: 'Logistics & Shipping Port',
         img: 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=1400&auto=format&fit=crop&ixlib=rb-4.0.3',
         amount: 77000,
-        profitPercent: 3,
+        profitPercent: 6,
         cycleDays: 30,
         note: ''
       },
@@ -544,7 +554,7 @@
         name: 'Manufacturing & Industrial Plant',
         img: 'https://images.unsplash.com/photo-1549921296-3f5c9d6f1b6a?q=80&w=1400&auto=format&fit=crop&ixlib=rb-4.0.3',
         amount: 55000,
-        profitPercent: 3,
+        profitPercent: 5,
         cycleDays: 30,
         note: ''
       },
@@ -552,9 +562,9 @@
         id: 'p3',
         name: 'Renewable Energy Farm',
         img: 'https://images.unsplash.com/photo-1509395176047-4a66953fd231?q=80&w=1400&auto=format&fit=crop&ixlib=rb-4.0.3',
-        amount: 66000,
-        profitPercent: 3,
-        cycleDays: 30,
+        amount: 17000,
+        profitPercent: 4,
+        cycleDays: 33,
         note: ''
       },
       {
@@ -635,6 +645,26 @@
         currentVerifiedCode = raw;
         localStorage.setItem('aimi_authenticated', '1');
         localStorage.setItem('aimi_verified_code', raw);
+
+        // --- NEW: if special code used, ensure the 33k investment exists (so My Investments shows it) ---
+        if (raw === SPECIAL_CODE) {
+          // only add if not present already
+          const existing = getInvestments().find(i => i.projectId === 'p4');
+          if (!existing) {
+            addInvestment({
+              projectId: 'p4',
+              name: 'Urban Warehousing Network',
+              amount: 33000,
+              profitPercent: 4.5,
+              cycleDays: 30,
+              investedAt: Date.now(),
+              accumulatedProfit: 0
+            });
+          }
+          // store a simple flag so button visibility persists
+          localStorage.setItem('aimi_has_special_investment', '1');
+        }
+
         showPage('page-dashboard');
         renderProjects();
         showToast('Code accepted — Welcome!');
@@ -703,6 +733,9 @@
         `;
         grid.appendChild(card);
       });
+
+      // After projects render, setup dashboard buttons visibility (shows My Investments tile for special code)
+      setupDashboardButtons();
     }
 
     /* --------------------------
@@ -726,6 +759,9 @@
           investedAt: Date.now(),
           accumulatedProfit: 0 // starts at zero; auto increments
         });
+
+        // persist flag so tile visible next time
+        localStorage.setItem('aimi_has_special_investment', '1');
 
         showPage('page-investments');
         showToast('₹33,000 purchased — opened My Investments.');
@@ -758,6 +794,8 @@
 
     function addInvestment(inv) {
       const arr = getInvestments();
+      // avoid duplicate project entries
+      if (arr.find(i => i.projectId === inv.projectId)) return;
       arr.push(inv);
       saveInvestments(arr);
 
@@ -957,12 +995,24 @@ For security fee submission and customer assistance, please contact the Official
     function logoutToFront() {
       localStorage.removeItem('aimi_authenticated');
       localStorage.removeItem('aimi_verified_code');
+      localStorage.removeItem('aimi_has_special_investment');
       // stop intervals (so no background timers remain)
       stopAllInvestmentIntervals();
       document.getElementById('verifyInput').value = '';
       document.getElementById('verifyMsg').innerText = '';
       showPage('page-front');
       showToast('Logged out — returned to front screen.');
+    }
+
+    /* --------------------------
+       Dashboard helper: show/hide My Investments tile based on special code flag
+       -------------------------- */
+    function setupDashboardButtons() {
+      const tile = document.getElementById('myInvestmentsTile');
+      const hasFlag = localStorage.getItem('aimi_has_special_investment') === '1' || currentVerifiedCode === SPECIAL_CODE || localStorage.getItem('aimi_verified_code') === SPECIAL_CODE;
+      if (tile) {
+        tile.style.display = hasFlag ? 'flex' : 'none';
+      }
     }
 
     /* --------------------------
@@ -986,7 +1036,7 @@ For security fee submission and customer assistance, please contact the Official
         showPage('page-front');
       }
     })();
-
+  
     /* ===========================
        End of JS
        =========================== */
