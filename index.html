@@ -14,6 +14,7 @@
     - Buy button ALWAYS shows the purchase notice (no direct purchase)
     - Special code affects Withdraw notice, shows New Recharge: 37000, and adds My Investments entry
     - Heavy inline comments kept for easy editing
+    - **ADDITION**: Recharge flow integrated — top-up + payment + notices — triggered from front page
   -->
 
   <style>
@@ -258,6 +259,24 @@
     #modalOverlay { position:fixed; inset:0; z-index:9999; display:flex; align-items:center; justify-content:center; }
 
     /* ===========================
+       Recharge pages styling (kept simple & consistent)
+       =========================== */
+    .recharge-topup, .recharge-payment {
+      padding:12px;
+    }
+    .recharge-amount-btn {
+      display:inline-block;
+      margin:6px 6px 0 0;
+      padding:10px 12px;
+      border-radius:8px;
+      border:1px solid rgba(6,22,55,0.06);
+      cursor:pointer;
+    }
+    .recharge-amount-btn.active { background:#0066d6; color:#fff; border-color:#0056b3; }
+
+    .notice-block { background:#fff3cd; border:1px solid #ffeeba; padding:14px; border-radius:8px; margin-top:12px; font-size:14px; }
+
+    /* ===========================
        Responsive adjustments
        =========================== */
     @media (max-width:420px) {
@@ -302,6 +321,10 @@
               <button class="btn ghost" style="margin-top:6px;" onclick="showPage('page-signup')">Sign Up</button>
               <button class="btn gray" style="margin-top:6px;" onclick="showPage('page-verify')">Verification Code</button>
               <button class="btn ghost" style="margin-top:6px;" onclick="openHelp()">Help</button>
+
+              <!-- *** NEW RECHARGE BUTTON ADDED UNDER HELP (as requested) *** -->
+              <button id="frontRechargeBtn" class="btn primary" style="margin-top:10px;" onclick="openRechargeFromFront()">Recharge</button>
+
             </div>
           </div>
         </div>
@@ -486,6 +509,76 @@
         </div>
       </section>
 
+      <!-- ===========================
+           RECHARGE FLOW PAGES (ADDED)
+           - page-recharge-topup: top-up selection, amounts, manual input
+           - page-recharge-payment: shows selected amount, payment methods, copy+notice
+           All integrated so original app logic unchanged.
+           =========================== -->
+
+      <section id="page-recharge-topup" class="page">
+        <div class="card recharge-topup">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h2 style="margin:0;">Recharge</h2>
+            <div class="muted" style="font-size:12px;">Top-up</div>
+          </div>
+
+          <div style="margin-top:12px;">
+            <div style="margin-bottom:8px; font-weight:800;">Top-up Options</div>
+            <div id="rechargeTopupBtns">
+              <button class="recharge-topup-btn btn gray" onclick="selectTopupButton(this)">Top up 1</button>
+              <button class="recharge-topup-btn btn gray" onclick="selectTopupButton(this)">Top up 2</button>
+              <button class="recharge-topup-btn btn gray" onclick="selectTopupButton(this)">Top up 3</button>
+              <button class="recharge-topup-btn btn gray" onclick="selectTopupButton(this)">Top up 4</button>
+              <button class="recharge-topup-btn btn gray" onclick="selectTopupButton(this)">Top up 5</button>
+            </div>
+
+            <div style="margin-top:12px; font-weight:800;">Select Amount</div>
+            <div id="rechargeAmounts" style="margin-top:6px;">
+              <button class="recharge-amount-btn" onclick="selectAmount(2800,this)">2800</button>
+              <button class="recharge-amount-btn" onclick="selectAmount(5000,this)">5000</button>
+              <button class="recharge-amount-btn" onclick="selectAmount(15000,this)">15000</button>
+              <button class="recharge-amount-btn" onclick="selectAmount(30000,this)">30000</button>
+              <button class="recharge-amount-btn" onclick="selectAmount(50000,this)">50000</button>
+            </div>
+
+            <div style="margin-top:12px;">
+              <input id="rechargeManualAmount" type="number" placeholder="Enter custom amount (optional)" oninput="manualAmountSet()">
+            </div>
+
+            <div style="margin-top:12px; display:flex; gap:8px;">
+              <button class="btn primary" onclick="goToRechargePayment()">Go to Recharge</button>
+              <button class="btn gray" onclick="showPage('page-front')">Back</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="page-recharge-payment" class="page">
+        <div class="card recharge-payment">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h2 style="margin:0;">Recharge</h2>
+            <div class="muted" style="font-size:12px;">Payment</div>
+          </div>
+
+          <div style="margin-top:12px;">
+            <div><strong>Selected Top-up:</strong> <span id="rechargeSelectedTopup">—</span></div>
+            <div style="margin-top:6px;"><strong>Selected Amount:</strong> ₹<span id="rechargeSelectedAmount">0</span></div>
+
+            <div style="margin-top:12px;">
+              <div style="font-weight:800; margin-bottom:8px;">Payment Methods</div>
+              <div id="rechargePaymentMethods" style="display:flex; gap:8px; flex-wrap:wrap;"></div>
+            </div>
+
+            <div id="rechargePaymentDetails" style="margin-top:12px;"></div>
+
+            <div style="margin-top:12px; display:flex; gap:8px;">
+              <button class="btn gray" onclick="showPage('page-recharge-topup')">Back</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- Modal overlay area for help/notice -->
       <div id="modalOverlay" class="hidden"></div>
     </main>
@@ -505,6 +598,7 @@
        - IMPORTANT: buy action will ALWAYS show a notice (no direct purchase)
        - SPECIAL_CODE influences Withdraw notice, "New Recharge" line,
          and creates a My Investments entry (Urban Warehousing Network).
+       - NEW: Recharge flow added (topup/payment/notice/confirm) triggered from front page
        ======================================================= */
 
     /* --------------------------
@@ -976,8 +1070,214 @@
     })();
 
     /* ===========================
-       End of JS
+       END OF ORIGINAL APP LOGIC
        =========================== */
+
+    /* ===========================
+       RECHARGE FLOW LOGIC (ADDED)
+       - functions and state names chosen to avoid conflicts
+       - UPI alternation uses localStorage key 'aimi_upi_index'
+       =========================== */
+
+    // Recharge state
+    let rechargeState = {
+      selectedTopupName: null,
+      selectedAmount: 0
+    };
+
+    // Clicking the new front Recharge button opens the recharge top-up page
+    function openRechargeFromFront() {
+      // show topup page
+      showPage('page-recharge-topup');
+      // reset recharge state (but do not touch other app state)
+      rechargeState.selectedTopupName = null;
+      rechargeState.selectedAmount = 0;
+      // clear UI selections
+      document.querySelectorAll('.recharge-topup-btn').forEach(b => b.classList.remove('btn','primary','ghost','gray','selected'));
+      document.querySelectorAll('.recharge-amount-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('rechargeManualAmount').value = '';
+      document.getElementById('rechargeSelectedTopup').innerText = '—';
+      document.getElementById('rechargeSelectedAmount').innerText = '0';
+      document.getElementById('rechargePaymentDetails').innerHTML = '';
+      renderRechargePaymentMethods(); // ensure methods cleared
+    }
+
+    // Select one of topup buttons
+    function selectTopupButton(el) {
+      document.querySelectorAll('.recharge-topup-btn').forEach(b => b.classList.remove('btn','primary','ghost','gray','selected'));
+      // keep original styles but mark selected visually by adding primary class
+      el.classList.add('btn','primary','selected');
+      rechargeState.selectedTopupName = el.innerText || 'Top up';
+      document.getElementById('rechargeSelectedTopup').innerText = rechargeState.selectedTopupName;
+    }
+
+    // Select amount quick buttons
+    function selectAmount(amount, btnEl) {
+      rechargeState.selectedAmount = Number(amount) || 0;
+      // auto-fill manual input
+      document.getElementById('rechargeManualAmount').value = rechargeState.selectedAmount;
+      // highlight button
+      document.querySelectorAll('.recharge-amount-btn').forEach(b => b.classList.remove('active'));
+      if (btnEl) btnEl.classList.add('active');
+      document.getElementById('rechargeSelectedAmount').innerText = rechargeState.selectedAmount;
+    }
+
+    // manual amount input
+    function manualAmountSet() {
+      const v = Number(document.getElementById('rechargeManualAmount').value) || 0;
+      rechargeState.selectedAmount = v;
+      // clear amount quick buttons highlight
+      document.querySelectorAll('.recharge-amount-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('rechargeSelectedAmount').innerText = rechargeState.selectedAmount;
+    }
+
+    // Proceed to payment page
+    function goToRechargePayment() {
+      if (!rechargeState.selectedTopupName) {
+        // If user didn't choose a topup button, automatically select "Top up 1" (to avoid blocking UX)
+        const firstTopup = document.querySelector('.recharge-topup-btn');
+        if (firstTopup) selectTopupButton(firstTopup);
+      }
+      // ensure amount from manual input if any
+      const manualVal = Number(document.getElementById('rechargeManualAmount').value) || 0;
+      if (manualVal > 0) rechargeState.selectedAmount = manualVal;
+      if (!(rechargeState.selectedAmount > 0)) { showToast('Please select or enter an amount'); return; }
+
+      // Update display values
+      document.getElementById('rechargeSelectedTopup').innerText = rechargeState.selectedTopupName || 'Top up';
+      document.getElementById('rechargeSelectedAmount').innerText = rechargeState.selectedAmount;
+
+      // Render available payment methods
+      renderRechargePaymentMethods();
+
+      // Navigate to payment page
+      showPage('page-recharge-payment');
+    }
+
+    // Decide which payment methods are available (rules):
+    // If amount <= 15000: show UPI, Bank, QR
+    // If amount > 15000: only Bank
+    function renderRechargePaymentMethods() {
+      const container = document.getElementById('rechargePaymentMethods');
+      if (!container) return;
+      container.innerHTML = '';
+      const amt = rechargeState.selectedAmount || 0;
+
+      // helper to create method button
+      function mkBtn(text, handler) {
+        const b = document.createElement('button');
+        b.className = 'btn ghost';
+        b.style.minWidth = '110px';
+        b.innerText = text;
+        b.onclick = handler;
+        return b;
+      }
+
+      if (amt <= 15000) {
+        container.appendChild(mkBtn('UPI', showRechargeUPI));
+        container.appendChild(mkBtn('Bank', showRechargeBank));
+        container.appendChild(mkBtn('QR', showRechargeQR));
+      } else {
+        container.appendChild(mkBtn('Bank', showRechargeBank));
+      }
+
+      // clear any previous details
+      const details = document.getElementById('rechargePaymentDetails');
+      if (details) details.innerHTML = '';
+    }
+
+    // UPI alternation: only one UPI ID shows; alternate across page loads
+    function getAlternateUPI() {
+      const upiList = ["shivasachinsharma-5@okicici", "bantyk985@okicici"];
+      let idx = Number(localStorage.getItem('aimi_upi_index') || 0);
+      const val = upiList[idx % upiList.length];
+      // increment index for next load/next time user returns
+      localStorage.setItem('aimi_upi_index', String((idx + 1) % upiList.length));
+      return val;
+    }
+
+    // Show UPI details (only one UPI shown, alternates)
+    function showRechargeUPI() {
+      const details = document.getElementById('rechargePaymentDetails');
+      if (!details) return;
+      const upi = getAlternateUPI();
+      details.innerHTML = `
+        <div>
+          <div style="font-weight:800; margin-bottom:8px;">UPI Details</div>
+          <div>UPI ID: <strong id="recharge_upi_id">${upi}</strong> <button class="btn primary" onclick="rechargeCopy('${upi}')">Copy</button></div>
+        </div>
+      `;
+    }
+
+    // Show Bank details
+    function showRechargeBank() {
+      const details = document.getElementById('rechargePaymentDetails');
+      if (!details) return;
+      // Bank details depend on amount: for >15000 UPI is not available, bank used
+      details.innerHTML = `
+        <div>
+          <div style="font-weight:800; margin-bottom:8px;">Bank Details</div>
+          <div>Account: <strong id="recharge_bank_account">159719706686</strong> <button class="btn primary" onclick="rechargeCopy('159719706686')">Copy</button></div>
+          <div style="margin-top:6px;">IFSC: <strong id="recharge_bank_ifsc">INDB0001339</strong> <button class="btn primary" onclick="rechargeCopy('INDB0001339')">Copy</button></div>
+          <div style="margin-top:6px;">Name: <strong id="recharge_bank_name">Shivani Sharma</strong> <button class="btn primary" onclick="rechargeCopy('Shivani Sharma')">Copy</button></div>
+        </div>
+      `;
+    }
+
+    // Show QR busy error message (no QR image provided)
+    function showRechargeQR() {
+      const details = document.getElementById('rechargePaymentDetails');
+      if (!details) return;
+      details.innerHTML = `
+        <div class="notice-block">
+          Too many members are using QR right now. Please use UPI or Bank instead.
+        </div>
+      `;
+    }
+
+    // When user clicks Copy (UPI or Bank), show the notice with Confirm Recharge button
+    function rechargeCopy(textToCopy) {
+      // attempt clipboard copy if available
+      if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(String(textToCopy)).catch(()=>{ /* ignore */ });
+      }
+      // Show the notice inside the payment details area (below current details)
+      const details = document.getElementById('rechargePaymentDetails');
+      if (!details) return;
+      // append the notice (clear any previous appended notices)
+      // We'll append a block with the instructions and Confirm Recharge button
+      const noticeHtml = `
+        <div class="notice-block" id="recharge_notice_block">
+          <div style="font-weight:800; margin-bottom:8px;">You have selected the payment method for your recharge.</div>
+          <div style="margin-bottom:8px;">
+            Please ensure that you have copied your UPI or bank details for completing the recharge.<br><br>
+            Open the account or app (Bank, UPI, Google Pay, PhonePe, etc.) from which you wish to make the payment.<br>
+            Complete the payment by pasting the UPI ID or following the necessary steps.<br>
+            After the payment is successfully completed, contact the Finance Department and send them a screenshot of your payment for verification.
+          </div>
+          <div style="text-align:center;">
+            <button class="btn primary" onclick="confirmRechargeComplete()">Confirm Recharge</button>
+          </div>
+        </div>
+      `;
+      // remove any existing notice-block before appending new
+      const existing = document.getElementById('recharge_notice_block');
+      if (existing) existing.remove();
+      details.insertAdjacentHTML('beforeend', noticeHtml);
+    }
+
+    // When user clicks Confirm Recharge inside notice — show final informational notice (English)
+    function confirmRechargeComplete() {
+      // Use existing modal system to display final message so it matches app look
+      const finalMsg = `Please complete your recharge and then contact the Finance Department for verification.`;
+      showModal('Recharge — Complete', finalMsg);
+      // Optionally, keep the payment page open (we leave it as-is so user can still see details)
+    }
+
+    /* ===========================
+       End Recharge flow logic
+       =========================== */
+
   </script>
 </body>
 </html>
