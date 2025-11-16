@@ -1,1 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>App Registration Screen Replica</title>
 
+    <!-- Google Font: Using 'Roboto' for the body text and 'Prata' for the logo 'A', consistent with the app's style. -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Prata&display=swap" rel="stylesheet">
+
+    <style>
+        /*
+        ========================================================
+        PIXEL-PERFECT REPLICATION ASSUMPTIONS & HEX VALUES
+        ========================================================
+        TARGET VIEWPORT: 360px width (mobile)
+        FONT ASSUMPTION: 'Roboto' for body text, 'Prata' for the logo 'A'.
+        LAYOUT UNITS: Primarily pixel units for precise matching.
+
+        COLOR CHOICES (Exact/Refined):
+        - Background Body: #F8F8F8
+        - Main Card Background: #FFFFFF
+        - Logo/Accent Blue: #19467C (Deep Navy Blue)
+        - Form Label/Text: #333333
+        - Placeholder Text: #999999 (Slightly lighter gray than previous guess)
+        - Input Border: #E0E0E0
+        - Registration Button Background: #EFEFEF (Light gray/off-white)
+        - Registration Button Border: #D9D9D9
+        - Verification Image Text Green (New Darker Shade): #15623d
+        - **ASSUMPTION** - Success Toast Background: #4CAF50 (Standard clear green)
+        - **ASSUMPTION** - Success Toast Text: #FFFFFF (White)
+        - **ASSUMPTION** - Toast Duration: 3000ms (3 seconds)
+
+        SIZE/SPACING ASSUMPTIONS:
+        - Container Padding: 25px Left/Right
+        - Logo/Header Container Width: 70px (Adjusted for single 'A' logo)
+        - Input Field Height: 44px
+        - 'Registration' Header Font Size: 18px
+        - Form Field Labels Font Size: 15px
+        - Verification Code Pattern: 4-digit numeric (Matching screenshot length)
+        ========================================================
+        */
+
+        /* Minimal Reset */
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* --- Base Setup --- */
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #F8F8F8;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+
+        /* --- Main App Container (Mobile Target) --- */
+        .app-container {
+            width: 360px; /* Exact mobile width target */
+            background-color: #FFFFFF;
+            min-height: 800px;
+            padding: 0 25px;
+            padding-top: 25px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Desktop Media Query: Center the container and manage max width */
+        @media (min-width: 1024px) {
+            .app-container {
+                margin-top: 5vh;
+                border-radius: 12px;
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+                min-height: 650px;
+            }
+        }
+
+        /* --- Logo & Header --- */
+        .header-top {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .logo-box {
+            width: 70px; /* Adjusted for single 'A' */
+            height: 70px; /* Adjusted for single 'A' */
+            background-color: #19467C;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .logo-text {
+            font-family: 'Prata', serif;
+            font-size: 45px; /* Adjusted for single 'A' */
+            font-weight: 400;
+            color: #FFFFFF;
+            line-height: 1;
+        }
+
+        /* --- Registration Title --- */
+        .registration-title {
+            position: relative;
+            font-size: 18px;
+            font-weight: 500;
+            color: #333333;
+            margin-bottom: 30px;
+            padding-bottom: 5px;
+            display: inline-block;
+        }
+
+        .registration-title::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 100%;
+            height: 2px;
+            background-color: #19467C;
+        }
+
+        /* --- Form Elements --- */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 15px;
+            font-weight: 500;
+            color: #333333;
+            margin-bottom: 8px;
+        }
+
+        /* General Input Field Style */
+        .input-field {
+            width: 100%;
+            border: none;
+            outline: none;
+            font-size: 16px;
+            color: #333333;
+            background: transparent;
+            height: 44px;
+            padding: 0;
+            border-bottom: 1px solid #E0E0E0;
+        }
+
+        .input-field::placeholder {
+            color: #999999;
+            font-weight: 400;
+        }
+
+        /* --- Verification Input Group --- */
+        .input-with-verification {
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #E0E0E0;
+            height: 44px;
+        }
+
+        .verification-input {
+            flex-grow: 1;
+            border: none;
+            outline: none;
+            font-size: 16px;
+            color: #333333;
+            background: transparent;
+            height: 100%;
+            padding: 0;
+        }
+
+        .verification-image-box {
+            width: 80px;
+            height: 30px;
+            background-color: #FFFFFF;
+            border: 1px solid #E0E0E0;
+            margin-left: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+            cursor: pointer;
+            border-radius: 2px; /* Small radius observed in screenshot */
+        }
+
+        /* --- UPDATED: Verification Text Style with Line Above (Report Check Style) --- */
+        .verification-text {
+            /* Simulating the distorted/blurred appearance of the code */
+            font-family: 'Prata', serif;
+            font-size: 22px; /* Slightly larger */
+            font-weight: 700;
+            color: #15623d; /* Darker green */
+            transform: skewX(-15deg) scaleY(1.1); /* More skew */
+            filter: blur(0.7px); /* More blur */
+            user-select: none;
+            position: relative; /* Container for the pseudo element line */
+            padding-top: 5px; /* Space for the line above */
+        }
+
+        /* Horizontal line above the code (the "uper line") */
+        .verification-text::before {
+            content: '';
+            position: absolute;
+            top: 0px; /* Position slightly above the text */
+            left: 10%;
+            right: 10%;
+            height: 1px;
+            background-color: #15623d; /* Match text color */
+            opacity: 0.7;
+            transform: rotate(2deg); /* Slight rotation for distortion effect */
+        }
+        /* --- END UPDATED STYLES --- */
+        
+        /* --- New Refresh Button Style --- */
+        .refresh-button {
+            background: none;
+            border: none;
+            color: #19467C; /* Accent blue */
+            font-size: 14px;
+            font-weight: 500;
+            text-align: right;
+            display: block;
+            width: 100%;
+            padding: 5px 0 0 0; /* Pushes it down slightly below the input line */
+            cursor: pointer;
+            margin-bottom: -10px; /* Pulls up slightly to reduce gap to next form group */
+            transition: color 0.1s;
+        }
+        .refresh-button:hover {
+            text-decoration: underline;
+        }
+        .refresh-button:focus {
+            outline: none;
+            text-decoration: underline;
+        }
+
+
+        /* --- Registration Button --- */
+        .btn-registration {
+            width: 100%;
+            height: 45px;
+            margin-top: 40px;
+            background-color: #EFEFEF;
+            border: 1px solid #D9D9D9;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 500;
+            color: #333333;
+            cursor: pointer;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            transition: background-color 0.1s, opacity 0.3s;
+        }
+
+        .btn-registration:hover:not(:disabled) {
+            background-color: #e5e5e5;
+        }
+
+        .btn-registration:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* --- Bottom Link --- */
+        .bottom-link-container {
+            margin-top: 30px;
+            text-align: center;
+            width: 100%;
+        }
+
+        .bottom-link-container a {
+            font-size: 16px;
+            color: #19467C;
+            font-weight: 500;
+            text-decoration: none;
+        }
+
+        /* --- Toast Notification Style --- */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #4CAF50; /* Green Success */
+            color: white;
+            padding: 12px 20px;
+            border-radius: 6px;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.5s, visibility 0.5s;
+            display: flex;
+            align-items: center;
+            z-index: 1000;
+            min-width: 250px;
+            text-align: left;
+        }
+
+        .toast.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .toast-icon {
+            width: 20px;
+            height: 20px;
+            fill: #FFFFFF;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <!-- Logo & Header Section -->
+        <div class="header-top">
+            <div class="logo-box">
+                <span class="logo-text">A</span>
+            </div>
+            <!-- Removed Hindi text as per requirement -->
+        </div>
+
+        <!-- Registration Title -->
+        <h1 class="registration-title">Registration</h1>
+
+        <!-- Form -->
+        <form id="registrationForm" aria-label="Registration Form">
+
+            <!-- Code Input -->
+            <div class="form-group">
+                <label for="code" class="form-label">Code</label>
+                <input
+                    type="text"
+                    id="code"
+                    class="input-field"
+                    placeholder="Enter Invitation Code"
+                    aria-label="Invitation Code"
+                    required
+                >
+            </div>
+
+            <!-- Telephone Input -->
+            <div class="form-group">
+                <label for="telephone" class="form-label">Telephone</label>
+                <input
+                    type="tel"
+                    id="telephone"
+                    class="input-field"
+                    placeholder="Enter Phone Number"
+                    aria-label="Telephone Number"
+                    required
+                >
+            </div>
+
+            <!-- Verification Input with Image -->
+            <div class="form-group">
+                <label for="verification" class="form-label">Verification</label>
+                <div class="input-with-verification">
+                    <input
+                        type="text"
+                        id="verification"
+                        class="verification-input"
+                        placeholder="Enter Verification Code"
+                        aria-label="Verification Code"
+                        required
+                    >
+                    <!-- Verification Image Placeholder (clickable for refresh) -->
+                    <div id="verificationBox" class="verification-image-box" role="button" tabindex="0" aria-label="Refresh Verification Code">
+                        <span id="verificationText" class="verification-text"></span>
+                    </div>
+                </div>
+                <!-- NEW BUTTON: Update Code -->
+                <button type="button" id="refreshButton" class="refresh-button">Update Code</button>
+            </div>
+
+            <!-- Password Input -->
+            <div class="form-group">
+                <label for="password" class="form-label">Password</label>
+                <input
+                    type="password"
+                    id="password"
+                    class="input-field"
+                    placeholder="Enter Password"
+                    aria-label="Password"
+                    required
+                >
+            </div>
+
+            <!-- Confirm Password Input -->
+            <div class="form-group">
+                <label for="confirm-password" class="form-label">Confirm</label>
+                <input
+                    type="password"
+                    id="confirm-password"
+                    class="input-field"
+                    placeholder="Confirm Password"
+                    aria-label="Confirm Password"
+                    required
+                >
+            </div>
+
+            <!-- Registration Button -->
+            <button type="submit" class="btn-registration" id="registerButton">Register</button>
+        </form>
+
+        <!-- Bottom Link (Already registered) -->
+        <div class="bottom-link-container">
+    <a href="login.html">Already registered</a>
+</div>
+        <div style="height: 150px;">
+            <!-- Placeholder space -->
+        </div>
+    </div>
+
+    <!-- Success Toast Notification -->
+    <div id="successToast" class="toast" role="alert" aria-live="assertive">
+        <!-- Checkmark Icon SVG -->
+        <svg class="toast-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
+        </svg>
+        Your account has been registered.
+    </div>
+
+    <!-- Minimal JavaScript for Behavior -->
+    <script>
+        const form = document.getElementById('registrationForm');
+        const verifText = document.getElementById('verificationText');
+        const verifBox = document.getElementById('verificationBox');
+        const registerButton = document.getElementById('registerButton');
+        const toast = document.getElementById('successToast');
+        const refreshButton = document.getElementById('refreshButton'); // New button element
+
+        // --- Verification Code Logic ---
+        function generateVerificationCode() {
+            // Generates a 4-digit number code (matching screenshot pattern)
+            return Math.floor(1000 + Math.random() * 9000).toString();
+        }
+
+        function refreshVerification() {
+            verifText.textContent = generateVerificationCode();
+        }
+
+        // Initial code load
+        refreshVerification();
+
+        // Attach refresh listener to the verification box (from screenshot)
+        verifBox.addEventListener('click', refreshVerification);
+        verifBox.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                refreshVerification();
+            }
+        });
+
+        // Attach refresh listener to the new button
+        refreshButton.addEventListener('click', refreshVerification);
+
+
+    // --- Registration Logic ---
+form.addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    // Minimal validation check (required fields handled by HTML)
+    const password = document.getElementById('password').value;
+    const confirmPassword = document.getElementById('confirm-password').value;
+
+    if (password !== confirmPassword) {
+        console.error("Passwords do not match.");
+        return;
+    }
+
+    // Disable form and show loading state
+    registerButton.disabled = true;
+    registerButton.textContent = 'Registering...';
+    const formElements = form.querySelectorAll('input, button');
+    formElements.forEach(el => {
+        if (el.id !== 'refreshButton') { // Keep the refresh button enabled
+            el.disabled = true;
+        }
+    });
+
+    // Simulate network delay (5 to 10 seconds)
+    const delay = Math.random() * 5000 + 5000; // 5000ms (5s) + up to 5000ms
+    
+    setTimeout(() => {
+        // Re-enable form elements
+        registerButton.disabled = false;
+        registerButton.textContent = 'Register';
+        formElements.forEach(el => el.disabled = false);
+
+        // Show success toast
+        toast.classList.add('show');
+        
+        // Hide toast after ASSUMED 3 seconds
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 3000);
+
+        // Clear the form fields after successful registration
+        form.reset();
+        refreshVerification(); // Generate a new verification code
+
+        // ✅ ye line nayi add hui hai — register complete hone ke baad login page open karegi
+        window.location.href = "login.html"; 
+
+    }, delay);
+});
+</script>
+</body>
+</html>
